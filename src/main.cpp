@@ -26,7 +26,11 @@ LiquidCrystal_I2C lcd(0x3F, 20, 2);
 
 
 // Working variables
-float potPercentage = 0;
+float       potPercentage   = 0;
+uint8_t     filledSquare[8] = {0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff}; // Custom char
+byte        i;
+bool        blinkOn         = true;     // Blink management
+long int    lastBlink       = 0;        // Blink management
 
 // Color management
 enum RGB{
@@ -39,16 +43,18 @@ int _rgbLedValues[] = {255, 0, 0}; // Red, Green, Blue
 
 // Functions declaration
 void displayColor(byte r, byte g, byte b);
-void signalBlink(int delay_time,int nb_iteration);
 
 void setup() {
  	// LCD Screen init
  	lcd.init();
  	lcd.backlight();
+    lcd.createChar(0, filledSquare); // Sends the custom char to lcd
+    lcd.setCursor(0,0);
 
-    Serial.begin(9600);
-    Serial.println(F(""));
-    Serial.println(F("Starting..."));
+    // Serial.begin(9600);
+    // Serial.println(F(""));
+    lcd.println(F("Starting...         "));
+    lcd.println(F("    Hydra Airsoft   "));
 
     pinMode(PIN_LED_R1, OUTPUT);
     pinMode(PIN_LED_G1, OUTPUT);
@@ -58,22 +64,26 @@ void setup() {
     pinMode(PIN_LED_B2, OUTPUT);
 
     // Test sequence on start to check if there is some burned leds
-    Serial.println(F("- Test Red"));
+    lcd.setCursor(0,1);
+    lcd.println(F("- Test Red          "));
     displayColor(255, 0, 0);
     delay(500);
-    Serial.println(F("- Test Green"));
+    lcd.setCursor(0,1);
+    lcd.println(F("- Test Green        "));
     displayColor(0, 255, 0);
     delay(500);
-    Serial.println(F("- Test Blue"));
+    lcd.setCursor(0,1);
+    lcd.println(F("- Test Blue         "));
     displayColor(0, 0, 255);
     delay(500);
-    Serial.println(F("- Test Orange"));
+    lcd.setCursor(0,1);
+    lcd.println(F("- Test Orange       "));
     displayColor(255, 165, 0);
     delay(500);
-    Serial.println(F("- Test Purple"));
+    lcd.setCursor(0,1);
+    lcd.println(F("- Test Purple       "));
     displayColor(0, 255, 255);
     delay(500);
-    Serial.println(F("End of tests"));
 
     // Quick blink to show that tests are passed
     signalBlink(100,2);
@@ -81,24 +91,41 @@ void setup() {
     // Set initial fading color
     displayColor(_rgbLedValues[RED], _rgbLedValues[GREEN], _rgbLedValues[BLUE]);
     delay(100);
+    lcd.clear();
 }
 
 void loop() {
-    // Computing percentage
+    // Blink management
+    if (millis() - lastBlink >= 500){
+        if (blinkOn) {blinkOn = false;}
+        else {blinkOn = true;}
+        lastBlink = millis();
+    }
+
+    // Computing percentage and reading potentiometer value
     potPercentage = (float)analogRead(PIN_POTAR)/POTENTIOMETER_MAX;
     potPercentage = potPercentage * 100;
 
     // Display on LCD
-    lcd.clear();
-    lcd.setCursor(7,0);
+    lcd.setCursor(0,0);
+    lcd.print(F("         "));
     lcd.print(potPercentage);
-    lcd.print(F(" %"));
+    lcd.print(F("%        "));
+    lcd.setCursor(0,1);
+    lcd.print(F("                    "));
 
+    for (i = 0 ; i++ ; i < potPercentage/5){
+        lcd.print((char)0); // Custom char
+    }
 
-    // Reading potentiometer value
+    // Lighting RGB Leds
     if (potPercentage > 80) {
-        displayColor(255,0,0); // RED 
-        //signalBlink(50,3);
+        if (blinkOn) {
+            displayColor(255,0,0); // RED 
+        } else {
+            displayColor(0,0,0); // OFF
+        }
+        
     } else {
         if (potPercentage > 50) {
             displayColor(255,165,0); // ORANGE
@@ -109,17 +136,6 @@ void loop() {
 
     // UI Debouncing
     delay(300);  
-}
-
-// Signal blink
-void signalBlink(int delay_time,int nb_iteration){
-    for (int i=1 ; i<=nb_iteration ; i++){
-        displayColor(0, 0, 0);
-        delay(delay_time);
-        displayColor(255, 255, 255);
-        delay(delay_time);
-    }
-    displayColor(0, 0, 0);
 }
 
 // Actual display of selected combination of colors
