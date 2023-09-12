@@ -85,9 +85,6 @@ void setup() {
     displayColor(0, 255, 255);
     delay(500);
 
-    // Quick blink to show that tests are passed
-    signalBlink(100,2);
-
     // Set initial fading color
     displayColor(_rgbLedValues[RED], _rgbLedValues[GREEN], _rgbLedValues[BLUE]);
     delay(100);
@@ -114,7 +111,7 @@ void loop() {
     lcd.setCursor(0,1);
     lcd.print(F("                    "));
 
-    for (i = 0 ; i++ ; i < potPercentage/5){
+    for (i = 0 ; i < potPercentage/5 ; i++){
         lcd.print((char)0); // Custom char
     }
 
@@ -146,26 +143,16 @@ void displayColor(byte redValue, byte greenValue, byte blueValue) {
         analogWrite(PIN_LED_R1, redValue);
         analogWrite(PIN_LED_G1, greenValue);
         analogWrite(PIN_LED_B1, blueValue);
-        if (high_brightness){
-            analogWrite(PIN_LED_R2, redValue);
-            analogWrite(PIN_LED_G2, greenValue);
-            analogWrite(PIN_LED_B2, blueValue);
-        }
+        analogWrite(PIN_LED_R2, redValue);
+        analogWrite(PIN_LED_G2, greenValue);
+        analogWrite(PIN_LED_B2, blueValue);
     } else {
         // Common anode
         analogWrite(PIN_LED_R1, ~redValue);
         analogWrite(PIN_LED_G1, ~greenValue);
         analogWrite(PIN_LED_B1, ~blueValue);
-        if (high_brightness){
-            analogWrite(PIN_LED_R2, ~redValue);
-            analogWrite(PIN_LED_G2, ~greenValue);
-            analogWrite(PIN_LED_B2, ~blueValue);
-        }
-    }
-
-    if (!high_brightness){
-        analogWrite(PIN_LED_R2, 0);
-        analogWrite(PIN_LED_G2, 0);
-        analogWrite(PIN_LED_B2, 0);
+        analogWrite(PIN_LED_R2, ~redValue);
+        analogWrite(PIN_LED_G2, ~greenValue);
+        analogWrite(PIN_LED_B2, ~blueValue);
     }
 }
