@@ -8,9 +8,9 @@
 #include <LiquidCrystal_I2C.h>
 
 // Hardware
-#define POTENTIOMETER_MAX   940         // Valeur maximum du potentiometre
+#define POTENTIOMETER_MAX   668         // Valeur maximum du potentiometre
 #define POTENTIOMETER_MIN   30          // Valeur minimum du potentiometre
-const bool COMMON_CATHODE   = true; // Depends on LEDs type you have for your make
+const bool COMMON_CATHODE   = false;    // Depends on LEDs type you have for your make
 // First serie of 3 RGB LEDs
 const int PIN_LED_R1        = 9;
 const int PIN_LED_G1        = 10;
@@ -22,7 +22,7 @@ const int PIN_LED_B2        = 6;
 // Setting potentiometer
 const int PIN_POTAR         = A1;
 // LCD screen
-LiquidCrystal_I2C lcd(0x3F, 20, 2);
+LiquidCrystal_I2C lcd(0x27, 20, 4);
 
 
 // Working variables
@@ -31,6 +31,7 @@ uint8_t     filledSquare[8] = {0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff}; // Cust
 byte        i;
 bool        blinkOn         = true;     // Blink management
 long int    lastBlink       = 0;        // Blink management
+float       potarValue      = 0;
 
 // Color management
 enum RGB{
@@ -49,12 +50,14 @@ void setup() {
  	lcd.init();
  	lcd.backlight();
     lcd.createChar(0, filledSquare); // Sends the custom char to lcd
+    lcd.clear();
     lcd.setCursor(0,0);
 
     // Serial.begin(9600);
     // Serial.println(F(""));
-    lcd.println(F("Starting...         "));
-    lcd.println(F("    Hydra Airsoft   "));
+    lcd.print("Starting...         ");
+    lcd.setCursor(0,2);
+    lcd.print("    Hydra Airsoft   ");
 
     pinMode(PIN_LED_R1, OUTPUT);
     pinMode(PIN_LED_G1, OUTPUT);
@@ -62,26 +65,28 @@ void setup() {
     pinMode(PIN_LED_R2, OUTPUT);
     pinMode(PIN_LED_G2, OUTPUT);
     pinMode(PIN_LED_B2, OUTPUT);
+    delay(2000);
 
     // Test sequence on start to check if there is some burned leds
+    lcd.clear();
     lcd.setCursor(0,1);
-    lcd.println(F("- Test Red          "));
+    lcd.print(F("- Test Red          "));
     displayColor(255, 0, 0);
     delay(500);
     lcd.setCursor(0,1);
-    lcd.println(F("- Test Green        "));
+    lcd.print(F("- Test Green        "));
     displayColor(0, 255, 0);
     delay(500);
     lcd.setCursor(0,1);
-    lcd.println(F("- Test Blue         "));
+    lcd.print(F("- Test Blue         "));
     displayColor(0, 0, 255);
     delay(500);
     lcd.setCursor(0,1);
-    lcd.println(F("- Test Orange       "));
+    lcd.print(F("- Test Orange       "));
     displayColor(255, 165, 0);
     delay(500);
     lcd.setCursor(0,1);
-    lcd.println(F("- Test Purple       "));
+    lcd.print(F("- Test Purple       "));
     displayColor(0, 255, 255);
     delay(500);
 
@@ -100,19 +105,21 @@ void loop() {
     }
 
     // Computing percentage and reading potentiometer value
-    potPercentage = (float)analogRead(PIN_POTAR)/POTENTIOMETER_MAX;
+    potarValue = POTENTIOMETER_MAX - (float)analogRead(PIN_POTAR);
+    potPercentage = potarValue/POTENTIOMETER_MAX;
     potPercentage = potPercentage * 100;
 
     // Display on LCD
     lcd.setCursor(0,0);
-    lcd.print(F("         "));
+    lcd.print(F("       "));
     lcd.print(potPercentage);
     lcd.print(F("%        "));
-    lcd.setCursor(0,1);
-    lcd.print(F("                    "));
 
-    for (i = 0 ; i < potPercentage/5 ; i++){
-        lcd.print((char)0); // Custom char
+    // Progress bar display
+    lcd.setCursor(0,2);
+    for (i = 0 ; i < 20 ; i++){
+        if (i < potPercentage/5) {lcd.print((char)0);}
+        else {lcd.print(" ");}
     }
 
     // Lighting RGB Leds
@@ -132,7 +139,7 @@ void loop() {
     }
 
     // UI Debouncing
-    delay(300);  
+    //delay(300);  
 }
 
 // Actual display of selected combination of colors
