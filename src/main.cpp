@@ -8,8 +8,9 @@
 #include <LiquidCrystal_I2C.h>
 
 // Hardware
-#define POTENTIOMETER_MAX   668         // Valeur maximum du potentiometre
+#define POTENTIOMETER_MAX   668         // Valeur maximum du potentiometre 668
 #define POTENTIOMETER_MIN   30          // Valeur minimum du potentiometre
+#define TEST_LED_DURATION   1000        // Durée d'allumage des leds en phase de test
 const bool COMMON_CATHODE   = false;    // Depends on LEDs type you have for your make
 // First serie of 3 RGB LEDs
 const int PIN_LED_R1        = 9;
@@ -65,6 +66,7 @@ void setup() {
     pinMode(PIN_LED_R2, OUTPUT);
     pinMode(PIN_LED_G2, OUTPUT);
     pinMode(PIN_LED_B2, OUTPUT);
+    displayColor(0,0,0);
     delay(2000);
 
     // Test sequence on start to check if there is some burned leds
@@ -72,23 +74,24 @@ void setup() {
     lcd.setCursor(0,1);
     lcd.print(F("- Test Red          "));
     displayColor(255, 0, 0);
-    delay(500);
+    delay(TEST_LED_DURATION);
     lcd.setCursor(0,1);
     lcd.print(F("- Test Green        "));
     displayColor(0, 255, 0);
-    delay(500);
+    delay(TEST_LED_DURATION);
     lcd.setCursor(0,1);
     lcd.print(F("- Test Blue         "));
     displayColor(0, 0, 255);
-    delay(500);
+    delay(TEST_LED_DURATION);
     lcd.setCursor(0,1);
     lcd.print(F("- Test Orange       "));
     displayColor(255, 165, 0);
-    delay(500);
+    delay(TEST_LED_DURATION);
     lcd.setCursor(0,1);
     lcd.print(F("- Test Purple       "));
-    displayColor(0, 255, 255);
-    delay(500);
+    displayColor(255, 0, 255);
+    delay(TEST_LED_DURATION);
+    displayColor(0,0,0);
 
     // Set initial fading color
     displayColor(_rgbLedValues[RED], _rgbLedValues[GREEN], _rgbLedValues[BLUE]);
@@ -107,6 +110,7 @@ void loop() {
     // Computing percentage and reading potentiometer value
     potarValue = POTENTIOMETER_MAX - (float)analogRead(PIN_POTAR);
     potPercentage = potarValue/POTENTIOMETER_MAX;
+    if (potPercentage < 0) {potPercentage = 0;}
     potPercentage = potPercentage * 100;
 
     // Display on LCD
@@ -122,20 +126,29 @@ void loop() {
         else {lcd.print(" ");}
     }
 
+    // DEBUG for potentiometer calibration
+    //lcd.setCursor(0,3);
+    //lcd.print(analogRead(PIN_POTAR));
+    //lcd.print("    ");
+
     // Lighting RGB Leds
-    if (potPercentage > 80) {
-        if (blinkOn) {
-            displayColor(255,0,0); // RED 
+    if (potPercentage > 3){
+        if (potPercentage > 80) {
+            if (blinkOn) {
+                displayColor(255,0,0); // RED 
+            } else {
+                displayColor(0,0,0); // OFF
+            }
+            
         } else {
-            displayColor(0,0,0); // OFF
+            if (potPercentage > 50) {
+                displayColor(255,165,0); // ORANGE
+            } else {
+                displayColor(0,255,0); // GREEN
+            }
         }
-        
     } else {
-        if (potPercentage > 50) {
-            displayColor(255,165,0); // ORANGE
-        } else {
-            displayColor(0,255,0); // GREEN
-        }
+        displayColor(0,0,0);
     }
 
     // UI Debouncing
